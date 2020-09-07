@@ -208,12 +208,14 @@ func TestSeeder_Seed(t *testing.T) {
 }
 
 type testConfig struct {
-	Name    sync.String  `seed:"John Doe"`
-	Age     sync.Int64   `seed:"18" env:"ENV_AGE"`
-	City    sync.String  `seed:"London" flag:"city"`
-	Balance sync.Float64 `seed:"99.9" env:"ENV_BALANCE"`
-	HasJob  sync.Bool    `seed:"true" env:"ENV_HAS_JOB" consul:"/config/has-job"`
-	About   sync.String  `seed:"" file:"testdata/test.txt"`
+	Name           sync.String   `seed:"John Doe"`
+	Age            sync.Int64    `seed:"18" env:"ENV_AGE"`
+	City           sync.String   `seed:"London" flag:"city"`
+	Balance        sync.Float64  `seed:"99.9" env:"ENV_BALANCE"`
+	HasJob         sync.Bool     `seed:"true" env:"ENV_HAS_JOB" consul:"/config/has-job"`
+	About          sync.String   `seed:"" file:"testdata/test.txt"`
+	Comments       []sync.String `seed:"\"a\",\"b\"" consul:"/config/addresses"`
+	SessionTimeout sync.String   `seed:"1s" consul:"/config/sessionTimeout"`
 }
 
 type testInvalidFileInt struct {

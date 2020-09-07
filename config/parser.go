@@ -12,6 +12,7 @@ const (
 	typeInvalid structFieldType = iota
 	typeField
 	typeStruct
+	typeSlice
 )
 
 type parser struct {
@@ -35,7 +36,6 @@ func (p *parser) ParseCfg(cfg interface{}) ([]*Field, error) {
 
 func (p *parser) getFields(prefix string, tp reflect.Type, val reflect.Value) ([]*Field, error) {
 	var ff []*Field
-
 	for i := 0; i < tp.NumField(); i++ {
 		f := tp.Field(i)
 
@@ -57,6 +57,12 @@ func (p *parser) getFields(prefix string, tp reflect.Type, val reflect.Value) ([
 				return nil, err
 			}
 			ff = append(ff, nested...)
+		case typeSlice:
+			fld, err := p.createSliceField(prefix, f, val.Field(i))
+			if err != nil {
+				return nil, err
+			}
+			ff = append(ff, fld)
 		}
 	}
 	return ff, nil
@@ -64,6 +70,19 @@ func (p *parser) getFields(prefix string, tp reflect.Type, val reflect.Value) ([
 
 func (p *parser) createField(prefix string, f reflect.StructField, val reflect.Value) (*Field, error) {
 	fld := newField(prefix, f, val)
+
+	value, ok := fld.Sources()[SourceConsul]
+	if ok {
+		if p.isKeyValueDuplicate(SourceConsul, value) {
+			return nil, fmt.Errorf("duplicate value %v for source %s", fld, SourceConsul)
+		}
+	}
+
+	return fld, nil
+}
+
+func (p *parser) createSliceField(prefix string, f reflect.StructField, val reflect.Value) (*Field, error) {
+	fld := newSliceField(prefix, f, val)
 
 	value, ok := fld.Sources()[SourceConsul]
 	if ok {
@@ -88,10 +107,13 @@ func (p *parser) isKeyValueDuplicate(src Source, value string) bool {
 
 func (p *parser) getStructFieldType(f reflect.StructField, val reflect.Value) (structFieldType, error) {
 	t := f.Type
-	if t.Kind() != reflect.Struct {
+	fmt.Println(t.Kind().String())
+	if t.Kind() != reflect.Struct && t.Kind() != reflect.Slice {
 		return typeInvalid, fmt.Errorf("only struct type supported for %s", f.Name)
 	}
-
+	if t.Kind() == reflect.Slice {
+		return typeSlice, nil
+	}
 	cfgType := reflect.TypeOf((*CfgType)(nil)).Elem()
 
 	for _, tag := range sourceTags {

@@ -62,6 +62,27 @@ func newField(prefix string, fld reflect.StructField, val reflect.Value) *Field 
 	return f
 }
 
+// newField constructor.
+func newSliceField(prefix string, fld reflect.StructField, val reflect.Value) *Field {
+
+	f := &Field{
+		name:    prefix + fld.Name,
+		tp:      fld.Type.Name(),
+		version: 0,
+		// structField: val.Index(0).Addr().Interface().(CfgType),
+		sources: make(map[Source]string),
+	}
+
+	for _, tag := range sourceTags {
+		value, ok := fld.Tag.Lookup(string(tag))
+		if ok {
+			f.sources[tag] = value
+		}
+	}
+
+	return f
+}
+
 // Name getter.
 func (f *Field) Name() string {
 	return f.name

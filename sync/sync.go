@@ -3,6 +3,7 @@ package sync
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"sync"
 )
@@ -181,6 +182,40 @@ func (s *Secret) String() string {
 
 // SetString parses and sets a value from string type.
 func (s *Secret) SetString(val string) error {
+	s.Set(val)
+	return nil
+}
+
+// Slice type with concurrent access support.
+type Slice struct {
+	rw    sync.RWMutex
+	value []interface{}
+	typ   reflect.Type
+}
+
+// Get returns the internal value.
+func (s *Slice) Get() []interface{} {
+	s.rw.RLock()
+	defer s.rw.RUnlock()
+	return s.value
+}
+
+// Set a value.
+func (s *Slice) Set(value []interface{}) {
+	s.rw.Lock()
+	defer s.rw.Unlock()
+	s.value = value
+}
+
+// String returns string representation of value.
+func (s *Slice) String() string {
+	s.rw.RLock()
+	defer s.rw.RUnlock()
+	return s.value
+}
+
+// SetString parses and sets a value from string type.
+func (s *Slice) SetString(val string) error {
 	s.Set(val)
 	return nil
 }
